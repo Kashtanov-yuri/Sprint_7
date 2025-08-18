@@ -21,7 +21,6 @@
     </properties>
 
     <dependencies>
-        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -34,15 +33,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Добавлено для поддержки параметризованных тестов -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- RestAssured и его зависимости -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -61,8 +57,6 @@
             <version>${groovy.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- JSON сериализация -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -73,16 +67,12 @@
             <artifactId>jackson-core</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
-        <!-- Allure -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
             <version>${allure.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- Логирование -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
