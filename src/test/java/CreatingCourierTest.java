@@ -1,64 +1,99 @@
 import io.qameta.allure.junit5.AllureJunit5;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.Map;
-
-import static io.restassured.RestAssured.baseURI;
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
 @ExtendWith(AllureJunit5.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class CreatingCourierTest {
-    private static Map<String, String> validCourier;
-    private static Map<String, String> duplicateCourier;
-    private static String random;
-    private static String createdCourierLogin;
+public class CreatingCourierTest extends BaseTest {
 
-    @BeforeAll
-    public static void setup() {
-        random = CourierGenerator.getRandomNano();
-        validCourier = Map.of(
-                "login", "Юрий1" + random,
-                "password", "theEasiestPassword",
-                "firstName", "Каштанов"
-        );
-        duplicateCourier = Map.of(
-                "login", "Юрий1" + random,
-                "password", "anotherPassword",
-                "firstName", "Каштанов"
-        );
-        baseURI = CourierGenerator.BASE_URL;
-        createdCourierLogin = null;
+
+    @Test
+    @Step("Успешное создание курьера")
+    public void testSuccessfulCourierCreation() {
+        Map<String, String> validCourier = generateValidCourierData();
+        createCourierAndVerify(validCourier);
+        deleteCourierAfterTest(validCourier);
     }
 
     @Test
-    @Order(1)
-    public void testSuccessfulCourierCreation() {
-        given()
-                .log().all()
-                .contentType("application/json")
-                .body(validCourier)
-                .when()
-                .post("/api/v1/courier")
+    @Step("Создание дубликата курьера")
+    public void testDuplicateCourierCreation() {
+        Map<String, String> validCourier = generateValidCourierData();
+        createCourier(validCourier);
+        attemptDuplicateCreation(validCourier);
+        deleteCourierAfterTest(validCourier);
+    }
+
+    @Test
+    @Step("Создание курьера без логина")
+    public void testCourierCreationWithoutLogin() {
+        Map<String, String> courierWithoutLogin = generateCourierWithoutLogin();
+        attemptCreationWithoutRequiredField(courierWithoutLogin);
+    }
+
+    @Test
+    @Step("Создание курьера без пароля")
+    public void testCourierCreationWithoutPassword() {
+        Map<String, String> courierWithoutPassword = generateCourierWithoutPassword();
+        attemptCreationWithoutRequiredField(courierWithoutPassword);
+    }
+
+    @Test
+    @Step("Создание курьера без имени")
+    public void testCourierCreationWithoutFirstName() {
+        Map<String, String> courierWithoutFirstName = generateCourierWithoutFirstName();
+        createCourierAndVerify(courierWithoutFirstName);
+        deleteCourierAfterTest(courierWithoutFirstName);
+    }
+
+    @Step("Генерация валидных данных курьера")
+    private Map<String, String> generateValidCourierData() {
+        return CourierGenerator.generateValidCourierData();
+    }
+
+    @Step("Генерация данных курьера без логина")
+    private Map<String, String> generateCourierWithoutLogin() {
+        return CourierGenerator.generateCourierWithoutLogin();
+    }
+
+    @Step("Генерация данных курьера без пароля")
+    private Map<String, String> generateCourierWithoutPassword() {
+        return CourierGenerator.generateCourierWithoutPassword();
+    }
+
+    @Step("Генерация данных курьера без имени")
+    private Map<String, String> generateCourierWithoutFirstName() {
+        return CourierGenerator.generateCourierWithoutFirstName();
+    }
+
+    @Step("Создание курьера и проверка успешности")
+    private void createCourierAndVerify(Map<String, String> courierData) {
+        CourierApiClient.createCourier(CourierGenerator.BASE_URL, courierData)
                 .then()
                 .log().all()
                 .assertThat()
                 .statusCode(201)
                 .body("ok", equalTo(true));
-
-        createdCourierLogin = validCourier.get("login");
     }
 
-    @Test
-    @Order(2)
-    public void testDuplicateCourierCreation() {
-        given()
-                .log().all()
-                .contentType("application/json")
-                .body(duplicateCourier)
-                .when()
-                .post("/api/v1/courier")
+    @Step("Создание курьера")
+    private void createCourier(Map<String, String> courierData) {
+        CourierApiClient.createCourier(CourierGenerator.BASE_URL, courierData)
+                .then()
+                .statusCode(201);
+    }
+
+    @Step("Попытка создания дубликата курьера")
+    private void attemptDuplicateCreation(Map<String, String> originalCourier) {
+        Map<String, String> duplicateCourier = Map.of(
+                "login", originalCourier.get("login"),
+                "password", "anotherPassword",
+                "firstName", "Каштанов"
+        );
+
+        CourierApiClient.createCourier(CourierGenerator.BASE_URL, duplicateCourier)
                 .then()
                 .log().all()
                 .assertThat()
@@ -66,19 +101,9 @@ public class CreatingCourierTest {
                 .body("message", equalTo("Этот логин уже используется. Попробуйте другой."));
     }
 
-    @Test
-    public void testCourierCreationWithoutLogin() {
-        Map<String, String> courierWithoutLogin = Map.of(
-                "password", "somePassword",
-                "firstName", "Иван"
-        );
-
-        given()
-                .log().all()
-                .contentType("application/json")
-                .body(courierWithoutLogin)
-                .when()
-                .post("/api/v1/courier")
+    @Step("Попытка создания без обязательного поля")
+    private void attemptCreationWithoutRequiredField(Map<String, String> invalidCourierData) {
+        CourierApiClient.createCourier(CourierGenerator.BASE_URL, invalidCourierData)
                 .then()
                 .log().all()
                 .assertThat()
@@ -86,66 +111,12 @@ public class CreatingCourierTest {
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
-    @Test
-    public void testCourierCreationWithoutPassword() {
-        Map<String, String> courierWithoutPassword = Map.of(
-                "login", "userWithoutPassword",
-                "firstName", "Петр"
+    @Step("Удаление курьера после теста")
+    private void deleteCourierAfterTest(Map<String, String> courierData) {
+        CourierApiClient.deleteCourierByCredentials(
+                CourierGenerator.BASE_URL,
+                courierData.get("login"),
+                courierData.get("password")
         );
-
-        given()
-                .log().all()
-                .contentType("application/json")
-                .body(courierWithoutPassword)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .log().all()
-                .assertThat()
-                .statusCode(400)
-                .body("message", equalTo("Недостаточно данных для создания учетной записи"));
-    }
-
-    @Test
-    public void testCourierCreationWithoutFirstName() {
-        Map<String, String> courierWithoutFirstName = Map.of(
-                "login", "Юрий2" + random,
-                "password", "somePassword"
-        );
-        given()
-                .log().all()
-                .contentType("application/json")
-                .body(courierWithoutFirstName)
-                .when()
-                .post("/api/v1/courier")
-                .then()
-                .log().all()
-                .assertThat()
-                .statusCode(201)
-                .body("ok", equalTo(true));
-    }
-
-    @AfterAll
-    public static void cleanup() {
-        if (createdCourierLogin != null) {
-            Integer courierId = given()
-                    .contentType("application/json")
-                    .body(Map.of(
-                            "login", createdCourierLogin,
-                            "password", validCourier.get("password")
-                    ))
-                    .when()
-                    .post("/api/v1/courier/login")
-                    .then()
-                    .extract()
-                    .path("id");
-            if (courierId != null) {
-                given()
-                        .when()
-                        .delete("/api/v1/courier/" + courierId)
-                        .then()
-                        .statusCode(200);
-            }
-        }
     }
 }

@@ -1,30 +1,35 @@
 import io.qameta.allure.junit5.AllureJunit5;
+import io.qameta.allure.Step;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.Map;
-import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
 @ExtendWith(AllureJunit5.class)
-public class CourierLoginTest {
-    private static CourierGenerator.Courier testCourier;
+public class CourierLoginTest extends BaseTest {
+    private static String testCourierLogin;
+    private static String testCourierPassword;
 
     @BeforeAll
-    public static void setup() {
-        testCourier = CourierGenerator.createTestCourier(CourierGenerator.BASE_URL);
-        baseURI = CourierGenerator.BASE_URL;
+    @Step("Создание тестового курьера для проверки авторизации")
+    public static void setupTestData() {
+        Map<String, String> courierData = CourierTestDataGenerator.generateTestCourierData();
+        CourierApiClient.createCourier(CourierGenerator.BASE_URL, courierData)
+                .then()
+                .statusCode(201);
+
+        testCourierLogin = courierData.get("login");
+        testCourierPassword = courierData.get("password");
     }
 
     @Test
+    @Step("Успешная авторизация курьера")
     public void testSuccessfulCourierLogin() {
-        testCourier.id = given()
-                .log().all()
-                .contentType("application/json")
-                .body(Map.of(
-                        "login", testCourier.login,
-                        "password", testCourier.password
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> loginData = CourierTestDataGenerator.generateLoginData(
+                testCourierLogin, testCourierPassword
+        );
+
+        int courierId = CourierApiClient.loginCourier(CourierGenerator.BASE_URL, loginData)
                 .then()
                 .log().all()
                 .assertThat()
@@ -32,86 +37,93 @@ public class CourierLoginTest {
                 .body("id", notNullValue())
                 .extract()
                 .path("id");
+
+        CourierApiClient.deleteCourier(CourierGenerator.BASE_URL, courierId)
+                .then()
+                .statusCode(200);
     }
 
     @Test
+    @Step("Авторизация с неверным логином")
     public void testLoginWithWrongCredentials() {
-        given()
-                .contentType("application/json")
-                .body(Map.of(
-                        "login", "Неправильный_логин",
-                        "password", testCourier.password
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> wrongLoginData = CourierTestDataGenerator.generateWrongLoginData(testCourierPassword);
+
+        CourierApiClient.loginCourier(CourierGenerator.BASE_URL, wrongLoginData)
                 .then()
+                .log().all()
                 .statusCode(404)
                 .body("message", equalTo("Учетная запись не найдена"));
     }
 
     @Test
+    @Step("Авторизация с неверным паролем")
     public void testLoginWithWrongPassword() {
-        given()
-                .contentType("application/json")
-                .body(Map.of(
-                        "login", testCourier.login,
-                        "password", "Неправильный_пароль"
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> wrongPasswordData = CourierTestDataGenerator.generateWrongPasswordData(testCourierLogin);
+
+        CourierApiClient.loginCourier(CourierGenerator.BASE_URL, wrongPasswordData)
                 .then()
+                .log().all()
                 .statusCode(404)
                 .body("message", equalTo("Учетная запись не найдена"));
     }
 
     @Test
-    @DisplayName("Авторизация без логина")
+    @Step("Авторизация без указания логина")
     public void testLoginWithoutLoginField() {
-        given()
-                .contentType("application/json")
-                .body(Map.of(
-                        "password", testCourier.password
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> withoutLoginData = CourierTestDataGenerator.generateLoginWithoutLoginData(testCourierPassword);
+
+        CourierApiClient.loginCourier(CourierGenerator.BASE_URL, withoutLoginData)
                 .then()
+                .log().all()
                 .statusCode(400)
                 .body("message", equalTo("Недостаточно данных для входа"));
     }
 
     @Test
+    @Step("Авторизация без указания пароля")
     public void testLoginWithoutPasswordField() {
-        given()
-                .contentType("application/json")
-                .body(Map.of(
-                        "login", testCourier.login
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> withoutPasswordData = CourierTestDataGenerator.generateLoginWithoutPasswordData(testCourierLogin);
+
+        CourierApiClient.loginCourier(CourierGenerator.BASE_URL, withoutPasswordData)
                 .then()
+                .log().all()
                 .statusCode(400)
                 .body("message", equalTo("Недостаточно данных для входа"));
-    }//Тут баг?
+    }
 
     @Test
+    @Step("Авторизация несуществующего курьера")
     public void testLoginNonExistentCourier() {
-        String random = CourierGenerator.getRandomNano();
-        given()
-                .contentType("application/json")
-                .body(Map.of(
-                        "login", "Каштанов_" + random,
-                        "password", "пароль"
-                ))
-                .post("/api/v1/courier/login")
+        Map<String, String> nonExistentData = CourierTestDataGenerator.generateNonExistentCourierData();
+
+        CourierApiClient.loginCourier(CourierGenerator.BASE_URL, nonExistentData)
                 .then()
+                .log().all()
                 .statusCode(404)
                 .body("message", equalTo("Учетная запись не найдена"));
     }
 
     @AfterAll
+    @Step("Удаление тестового курьера после выполнения всех тестов")
     public static void cleanup() {
-        if (testCourier.id != null) {
-            given()
-                    .contentType("application/json")
-                    .delete("/api/v1/courier/" + testCourier.id)
+        try {
+            Map<String, String> loginData = CourierTestDataGenerator.generateLoginData(
+                    testCourierLogin, testCourierPassword
+            );
+
+            int courierId = CourierApiClient.loginCourier(CourierGenerator.BASE_URL, loginData)
+                    .then()
+                    .statusCode(200)
+                    .extract()
+                    .path("id");
+
+            CourierApiClient.deleteCourier(CourierGenerator.BASE_URL, courierId)
                     .then()
                     .statusCode(200);
+
+            System.out.println("Тестовый курьер успешно удален: " + testCourierLogin);
+        } catch (Exception e) {
+            System.out.println("Курьер уже удален или недоступен: " + e.getMessage());
         }
     }
 }

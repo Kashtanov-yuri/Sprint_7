@@ -1,21 +1,15 @@
+import io.qameta.allure.Step;
 import io.qameta.allure.junit5.AllureJunit5;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import static io.restassured.RestAssured.baseURI;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 @ExtendWith(AllureJunit5.class)
-public class OrderVerificationTest {
-
-    @BeforeAll
-    public static void setup() {
-        baseURI = CourierGenerator.BASE_URL;
-    }
+public class OrderVerificationTest extends BaseTest {
 
     @Test
+    @Step("Тест получения списка заказов")
     public void testOrdersListIsReturned() {
         given()
                 .when()
