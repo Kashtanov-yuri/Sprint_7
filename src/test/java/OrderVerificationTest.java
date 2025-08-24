@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.hamcrest.Matchers.*;
 
 @ExtendWith(AllureJunit5.class)
-@DisplayName("Тесты проверки заказов")
 public class OrderVerificationTest extends BaseTest {
 
     @Test

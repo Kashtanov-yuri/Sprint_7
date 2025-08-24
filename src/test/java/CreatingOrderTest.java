@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import static org.hamcrest.Matchers.*;
 
 @ExtendWith(AllureJunit5.class)
-@DisplayName("Тесты создания заказов")
 public class CreatingOrderTest extends BaseTest {
 
     private static Stream<Arguments> provideColorTestData() {
