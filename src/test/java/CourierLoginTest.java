@@ -24,6 +24,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Успешная авторизация курьера")
+    @DisplayName("Успешная авторизация с валидными учетными данными")
     public void testSuccessfulCourierLogin() {
         Map<String, String> loginData = CourierTestDataGenerator.generateLoginData(
                 testCourierLogin, testCourierPassword
@@ -45,6 +46,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Авторизация с неверным логином")
+    @DisplayName("Авторизация с неверным логином и валидным паролем")
     public void testLoginWithWrongCredentials() {
         Map<String, String> wrongLoginData = CourierTestDataGenerator.generateWrongLoginData(testCourierPassword);
 
@@ -57,6 +59,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Авторизация с неверным паролем")
+    @DisplayName("Авторизация с валидным логином и неверным паролем")
     public void testLoginWithWrongPassword() {
         Map<String, String> wrongPasswordData = CourierTestDataGenerator.generateWrongPasswordData(testCourierLogin);
 
@@ -69,6 +72,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Авторизация без указания логина")
+    @DisplayName("Авторизация без обязательного поля 'login'")
     public void testLoginWithoutLoginField() {
         Map<String, String> withoutLoginData = CourierTestDataGenerator.generateLoginWithoutLoginData(testCourierPassword);
 
@@ -81,6 +85,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Авторизация без указания пароля")
+    @DisplayName("Авторизация без обязательного поля 'password'")
     public void testLoginWithoutPasswordField() {
         Map<String, String> withoutPasswordData = CourierTestDataGenerator.generateLoginWithoutPasswordData(testCourierLogin);
 
@@ -93,6 +98,7 @@ public class CourierLoginTest extends BaseTest {
 
     @Test
     @Step("Авторизация несуществующего курьера")
+    @DisplayName("Авторизация с несуществующими учетными данными")
     public void testLoginNonExistentCourier() {
         Map<String, String> nonExistentData = CourierTestDataGenerator.generateNonExistentCourierData();
 

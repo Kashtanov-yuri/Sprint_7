@@ -8,9 +8,9 @@ import static org.hamcrest.Matchers.equalTo;
 @ExtendWith(AllureJunit5.class)
 public class CreatingCourierTest extends BaseTest {
 
-
     @Test
     @Step("Успешное создание курьера")
+    @DisplayName("Создание курьера с валидными данными")
     public void testSuccessfulCourierCreation() {
         Map<String, String> validCourier = generateValidCourierData();
         createCourierAndVerify(validCourier);
@@ -19,6 +19,7 @@ public class CreatingCourierTest extends BaseTest {
 
     @Test
     @Step("Создание дубликата курьера")
+    @DisplayName("Попытка создания курьера с уже существующим логином")
     public void testDuplicateCourierCreation() {
         Map<String, String> validCourier = generateValidCourierData();
         createCourier(validCourier);
@@ -28,6 +29,7 @@ public class CreatingCourierTest extends BaseTest {
 
     @Test
     @Step("Создание курьера без логина")
+    @DisplayName("Создание курьера без обязательного поля 'login'")
     public void testCourierCreationWithoutLogin() {
         Map<String, String> courierWithoutLogin = generateCourierWithoutLogin();
         attemptCreationWithoutRequiredField(courierWithoutLogin);
@@ -35,6 +37,7 @@ public class CreatingCourierTest extends BaseTest {
 
     @Test
     @Step("Создание курьера без пароля")
+    @DisplayName("Создание курьера без обязательного поля 'password'")
     public void testCourierCreationWithoutPassword() {
         Map<String, String> courierWithoutPassword = generateCourierWithoutPassword();
         attemptCreationWithoutRequiredField(courierWithoutPassword);
@@ -42,6 +45,7 @@ public class CreatingCourierTest extends BaseTest {
 
     @Test
     @Step("Создание курьера без имени")
+    @DisplayName("Создание курьера без необязательного поля 'firstName'")
     public void testCourierCreationWithoutFirstName() {
         Map<String, String> courierWithoutFirstName = generateCourierWithoutFirstName();
         createCourierAndVerify(courierWithoutFirstName);
@@ -101,7 +105,7 @@ public class CreatingCourierTest extends BaseTest {
                 .body("message", equalTo("Этот логин уже используется. Попробуйте другой."));
     }
 
-    @Step("Попытка создания без обязательного поля")
+    @Step("Попытка создания без обязательного поле")
     private void attemptCreationWithoutRequiredField(Map<String, String> invalidCourierData) {
         CourierApiClient.createCourier(CourierGenerator.BASE_URL, invalidCourierData)
                 .then()
